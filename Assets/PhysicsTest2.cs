@@ -1,7 +1,9 @@
 ﻿
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UGUI = UnityEngine.UI;
 
 public class PhysicsTest2 : MonoBehaviour
 {
@@ -11,6 +13,9 @@ public class PhysicsTest2 : MonoBehaviour
     [SerializeField] private float simulateFrame;
     [SerializeField] private float simulateSpeed;
     [SerializeField] private float ballPotential;
+    [SerializeField] private StickController stick;
+    [SerializeField] private UGUI.Button shotBtn;
+    [SerializeField] private UGUI.Button restartBtn;
 
     private Scene _mainScene;
     private PhysicsScene _mainPhysicsScene;
@@ -29,6 +34,8 @@ public class PhysicsTest2 : MonoBehaviour
 
     private void Awake()
     {
+        Physics.autoSimulation = false;
+
         _mainScene = SceneManager.GetActiveScene();
         _mainPhysicsScene = _mainScene.GetPhysicsScene();
 
@@ -38,7 +45,33 @@ public class PhysicsTest2 : MonoBehaviour
         _ballActor = ball.GetComponent<BallActor>();
         _ballPosition = new Vector3(0, 2, 0);
 
-        Physics.autoSimulation = false;
+        stick.onDrag += OnMove;
+        shotBtn.onClick.AddListener(OnShot);
+        restartBtn.onClick.AddListener(OnRestart);
+    }
+
+    private void OnRestart()
+    {
+        _ballPosition = new Vector3(0, 2, 0);
+
+        _ballActor.Stop();
+        _ballActor.Warp(_ballPosition);
+        CreateTrajectory();
+    }
+
+    private void OnShot()
+    {
+        _ballActor.Play(ballPotential);
+    }
+
+    private void OnMove(Vector3 dir)
+    {
+        var d = dir.normalized;
+        var f = new Vector3(d.x, 0, d.y) * Time.deltaTime;
+
+        _ballPosition += f;
+        _ballActor.Warp(_ballPosition);
+        CreateTrajectory();
     }
 
     private void Start()
@@ -90,7 +123,7 @@ public class PhysicsTest2 : MonoBehaviour
             CreateTrajectory();
         }
 
-        _timer += Time.deltaTime * 0.5f;
+        _timer += Time.deltaTime * 2f;
         while (_timer >= Time.fixedDeltaTime)
         {
             _timer -= Time.fixedDeltaTime;
@@ -127,9 +160,9 @@ public class PhysicsTest2 : MonoBehaviour
             List<Vector3> points = new List<Vector3>();
             for (int i = 0; i < simulateFrame; i++)
             {
-                float dt = Time.fixedDeltaTime; ;
-                _hiddenBallActor.Simulate(dt);
+                float dt = Time.fixedDeltaTime;
                 _subPhysicsScene.Simulate(dt);
+                _hiddenBallActor.Simulate(dt);
 
                 if (points.Count == 0 || (0.2f < (points[points.Count - 1] - _hiddenBallActor.position).magnitude))
                     points.Add(_hiddenBallActor.position);
