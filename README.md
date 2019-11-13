@@ -1,6 +1,6 @@
 # Unity Multi-PhysicsScene Trajectory
 
-**스크린샷**
+**Screen Shot**
 ---
 
 ![Trajectory](./images/Trajectory.png)
